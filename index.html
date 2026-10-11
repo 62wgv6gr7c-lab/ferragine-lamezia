@@ -282,7 +282,6 @@
     } catch (e) {}
   }
 
-  // ---------- MAPPA ----------
   const palette = ["#e9c46a", "#f4a261", "#e5989b", "#b5c99a", "#cdb4db", "#ffd6a5"];
   const buildings = [];
 
@@ -411,7 +410,7 @@
     ];
 
     let x = 0;
-    defs.forEach((d, idx) => {
+    defs.forEach((d) => {
       const b = {
         x,
         w: d.w,
@@ -443,7 +442,6 @@
       x += b.w + 10;
     });
 
-    // i binari partono da dopo l'officina, lungo l'area di manutenzione
     const railStart = buildings.filter(b => b.kind === "officina")[0].x + buildings.filter(b => b.kind === "officina")[0].w + 80;
     railVehicles = [
       { x: railStart + 40, y: GROUND - 28, w: 100, h: 30, type: "B40 Matisa", state: "ok" },
@@ -467,7 +465,6 @@
     WORLD = Math.max(2500, x + 1000);
     const finalB = buildings[buildings.length - 1];
     finalB.x = WORLD - 440;
-    // corridoio finale: discesa + binari
     railEndX = finalB.x - 250;
   }
 
@@ -506,13 +503,12 @@
   let planeTimer = 150;
   let planesDown = 0;
   let flash = 0;
-  const car = { x: 620, alarm: 0 };
+  const car = { x: 220, alarm: 0 };
   let alarmOsc = null;
   let gameOver = false;
   let dog = null;
   let dogTimer = 0;
 
-  // ---------- EFFETTI ----------
   function dust(x, y, n, color) {
     for (let i = 0; i < n; i++) {
       particles.push({
@@ -583,7 +579,6 @@
     if (plane && plane.state === "flying" && plane.x > camX - 60 && plane.x < camX + W + 60) hitPlane();
     startCarAlarm();
 
-    // mezzi gialli di manutenzione: possono rompersi al grido
     railVehicles.forEach(v => {
       if (v.state === "ok" && Math.abs(v.x - hero.x) < 180) {
         v.state = "broken";
@@ -617,7 +612,6 @@
       c.dir = c.x < hero.x ? -1 : 1;
     });
 
-    // zona finale: Bingos morde Ferragine
     if (isNearStation() && !dog) {
       triggerBingos();
     }
@@ -769,7 +763,6 @@
     dogTimer = 0;
   }
 
-  // ---------- INPUT ----------
   window.addEventListener("keydown", e => {
     if (e.key === "ArrowLeft") keys.left = true;
     if (e.key === "ArrowRight") keys.right = true;
@@ -821,7 +814,6 @@
     crash(0.8);
   }
 
-  // ---------- UPDATE ----------
   function update() {
     if (gameOver) return;
 
@@ -936,7 +928,6 @@
     camX += (target - camX) * 0.12;
   }
 
-  // ---------- DISEGNO ----------
   function drawSky() {
     const g = ctx.createLinearGradient(0, 0, 0, GROUND);
     g.addColorStop(0, "#7ab8f5");
@@ -983,7 +974,6 @@
       ctx.beginPath();
       c.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
       ctx.stroke();
-      // linee secondarie per fessure più dettagliate
       if (c.length > 3) {
         ctx.beginPath();
         for (let i = 0; i < c.length - 1; i++) {
@@ -1082,6 +1072,97 @@
     });
   }
 
+  function drawGenericWindows(b) {
+    const top = GROUND - b.h;
+    const gap = 18;
+    const cols = Math.max(2, Math.floor(b.w / 54));
+    const rows = Math.max(2, Math.floor(b.h / 54));
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = b.x + 24 + c * ((b.w - 40) / (cols - 1 || 1));
+        const y = top + 24 + r * ((b.h - 50) / (rows - 1 || 1));
+        ctx.fillStyle = '#8ea7ba';
+        ctx.fillRect(x, y, 18, 20);
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.fillRect(x + 2, y + 2, 6, 16);
+      }
+    }
+  }
+
+  function drawSpecialFacade(b) {
+    const top = GROUND - b.h;
+    if (b.kind === 'portineria') {
+      ctx.fillStyle = '#d9d5cf';
+      ctx.fillRect(b.x + 28, top + 26, b.w - 56, 80);
+      ctx.fillStyle = '#567086';
+      ctx.fillRect(b.x + 34, top + 32, b.w - 68, 12);
+      ctx.fillStyle = '#3a3f46';
+      ctx.fillRect(b.x + 80, top + 108, b.w - 160, 40);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('PORTINERIA', b.x + b.w / 2, top + 18);
+    }
+    if (b.kind === 'mensa') {
+      ctx.fillStyle = '#e6e0d5';
+      ctx.fillRect(b.x + 36, top + 18, b.w - 72, 78);
+      ctx.fillStyle = '#3d4a5d';
+      ctx.fillRect(b.x + 72, top + 90, b.w - 144, 40);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('MENSA', b.x + b.w / 2, top + 16);
+    }
+    if (b.kind === 'spogliatoi') {
+      ctx.fillStyle = '#dfe9ef';
+      for (let i = 0; i < 11; i++) {
+        const x = b.x + 20 + i * 28;
+        ctx.fillRect(x, top + 18, 18, 18);
+        ctx.fillStyle = '#b9d8ea';
+        ctx.fillRect(x + 3, top + 21, 12, 12);
+        ctx.fillStyle = '#dfe9ef';
+      }
+      ctx.fillStyle = '#2d4d63';
+      ctx.fillRect(b.x + 70, top + 100, b.w - 140, 25);
+    }
+    if (b.kind === 'officina') {
+      ctx.fillStyle = '#6d7279';
+      ctx.fillRect(b.x + 18, top + 28, b.w - 36, 62);
+      ctx.fillStyle = '#2d3a47';
+      ctx.fillRect(b.x + 26, top + 90, b.w - 52, 32);
+      ctx.fillStyle = '#a8bac9';
+      for (let i = 0; i < 11; i++) {
+        ctx.fillRect(b.x + 40 + i * 28, top + 38, 18, 20);
+      }
+      ctx.fillStyle = '#fff';
+      ctx.fillText('OFFICINA', b.x + b.w / 2, top + 18);
+    }
+    if (b.kind === 'magazzino') {
+      ctx.fillStyle = '#6d6d70';
+      ctx.fillRect(b.x + 18, top + 20, b.w - 36, 70);
+      ctx.fillRect(b.x + 46, top + 90, b.w - 92, 24);
+      ctx.fillStyle = '#dfe3ea';
+      ctx.fillText('MAGAZZINO', b.x + b.w / 2, top + 16);
+    }
+    if (b.kind === 'verniciatura') {
+      ctx.fillStyle = '#c8d0d8';
+      ctx.fillRect(b.x + 20, top + 20, b.w - 40, 62);
+      ctx.fillStyle = '#d67b52';
+      ctx.fillRect(b.x, top - 8, b.w, 10);
+      ctx.fillStyle = '#2d4d63';
+      ctx.fillRect(b.x + 36, top + 82, b.w - 72, 28);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('VERNICIATURA', b.x + b.w / 2, top + 16);
+    }
+    if (b.kind === 'uffici' || b.kind === 'uffici2' || b.kind === 'aula') {
+      ctx.fillStyle = '#dfe5ec';
+      for (let i = 0; i < 6; i++) {
+        const x = b.x + 28 + i * (b.w - 56) / 5;
+        ctx.fillRect(x, top + 26, 22, 20);
+      }
+      ctx.fillStyle = '#617382';
+      ctx.fillRect(b.x + 26, top + 90, b.w - 52, 24);
+    }
+  }
+
   function drawBuildingBody(b) {
     if (b.station) { drawStationFacade(b); drawFacadePeople(b); return; }
     const top = GROUND - b.h;
@@ -1110,8 +1191,14 @@
       if (bal.pot) drawPot(bal.x, bal.y - 12, 0);
     });
 
+    drawGenericWindows(b);
+    drawSpecialFacade(b);
     drawCracks(b);
     drawFacadePeople(b);
+    ctx.fillStyle = '#222';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(b.name.toUpperCase(), b.x + b.w / 2, top + 15);
   }
 
   function drawRubble(b, alpha) {
@@ -1328,7 +1415,6 @@
     ctx.moveTo(start, y + 13);
     ctx.lineTo(end, y + 13);
     ctx.stroke();
-    // tratto in discesa finale
     ctx.beginPath();
     ctx.moveTo(railEndX, GROUND + 18);
     ctx.lineTo(WORLD - 40, GROUND - 110);
